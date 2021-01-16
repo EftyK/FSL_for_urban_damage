@@ -175,7 +175,7 @@ def process_data(input_path, output_path, output_csv_path, val_split_pct):
         df_val = pd.DataFrame(data_array_val)
         df_train.to_csv(output_train_csv_path)
         df_test.to_csv(output_test_csv_path)
-        df_test.to_csv(output_val_csv_path)
+        df_val.to_csv(output_val_csv_path)
     else: 
         data_array = {'uuid': x_data, 'labels': y_data}
         df = pd.DataFrame(data = data_array)
