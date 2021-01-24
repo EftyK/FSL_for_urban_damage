@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import  matplotlib.font_manager
+import matplotlib.font_manager
 
 
 ##### DEFINITIONS ######
