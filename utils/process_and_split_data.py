@@ -1,20 +1,22 @@
 """
-xView2
-Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+Code adapted from https://github.com/DIUx-xView/xView2_baseline/blob/master/model/process_data.py
 
-NO WARRANTY. THIS CARNEGIE MELLON UNIVERSITY AND SOFTWARE ENGINEERING INSTITUTE MATERIAL IS FURNISHED ON AN "AS-IS"
-BASIS. CARNEGIE MELLON UNIVERSITY MAKES NO WARRANTIES OF ANY KIND, EITHER EXPRESSED OR IMPLIED, AS TO ANY MATTER
-INCLUDING, BUT NOT LIMITED TO, WARRANTY OF FITNESS FOR PURPOSE OR MERCHANTABILITY, EXCLUSIVITY, OR RESULTS OBTAINED
-FROM USE OF THE MATERIAL. CARNEGIE MELLON UNIVERSITY DOES NOT MAKE ANY WARRANTY OF ANY KIND WITH RESPECT TO FREEDOM
-FROM PATENT, TRADEMARK, OR COPYRIGHT INFRINGEMENT.
+xview2-baseline Copyright 2019 Carnegie Mellon University. BSD-3
 
-Released under a MIT (SEI)-style license, please see license.txt or contact permission@sei.cmu.edu for full terms.
-This material has been approved for public release and unlimited distribution.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+[DISTRIBUTION STATEMENT A] This material has been approved for public release and unlimited distribution. 
 Please see Copyright notice for non-US Government use and distribution.
-
-This Software includes and/or makes use of the following Third-Party Software subject to its own license:
-1. Matterport/Mask_RCNN - MIT Copyright 2017 Matterport, Inc.
-   https://github.com/matterport/Mask_RCNN/blob/master/LICENSE
 """
 from PIL import Image
 import time
@@ -93,7 +95,7 @@ def process_data(input_path, output_path, output_csv_path, val_split_pct):
     y_data = []
 
     disasters = [folder for folder in os.listdir(input_path) if not folder.startswith('.')]
-    disaster_paths = ([input_path + "/" +  d + "/images" for d in disasters])
+    disaster_paths = ([input_path + "/images" for d in disasters])
     image_paths = []
     image_paths.extend([(disaster_path + "/" + pic) for pic in os.listdir(disaster_path)] for disaster_path in disaster_paths)
     img_paths = np.concatenate(image_paths)
@@ -127,43 +129,13 @@ def process_data(input_path, output_path, output_csv_path, val_split_pct):
             cv2.imwrite(output_path + "/" + poly_uuid, poly_img)
             x_data.append(poly_uuid)
 
-
-    print("##########################")
-    print("0", y_data.count(0))
-    print("1", y_data.count(1))
-    print("2", y_data.count(2))
-    print("3", y_data.count(3))
-
     output_train_csv_path = os.path.join(output_csv_path, "train.csv")
 
-    #sm = SMOTE(random_state=42)
-
     if(val_split_pct > 0):
+
+        # split input data into 3: train, validation and test
         x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=1)
-
         x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.25, random_state=1) # 0.25 x 0.8 = 0.2
-
-
-        #x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=val_split_pct, random_state=1)
-
-        print("##########################")
-        print("0", y_train.count(0))
-        print("1", y_train.count(1))
-        print("2", y_train.count(2))
-        print("3", y_train.count(3))
-
-        print("##########################")
-        print("0", y_test.count(0))
-        print("1", y_test.count(1))
-        print("2", y_test.count(2))
-        print("3", y_test.count(3))
-
-        print("##########################")
-        print("0", y_val.count(0))
-        print("1", y_val.count(1))
-        print("2", y_val.count(2))
-        print("3", y_val.count(3))
-
 
         data_array_train = {'uuid': x_train, 'labels': y_train}
         data_array_test = {'uuid': x_test, 'labels': y_test}
@@ -197,11 +169,6 @@ def main():
                         required=True,
                         metavar='/path/to/xBD_output_csv',
                         help="Path to new directory to save csv")
-    parser.add_argument('--val_split_pct', 
-                        required=False,
-                        default=0.0,
-                        metavar='Percentage to split validation',
-                        help="Percentage to split ")
     args = parser.parse_args()
 
     logging.info("Started Processing for Data")
