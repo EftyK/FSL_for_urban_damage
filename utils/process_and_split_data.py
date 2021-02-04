@@ -39,6 +39,10 @@ from collections import defaultdict
 from sklearn.model_selection import train_test_split
 logging.basicConfig(level=logging.INFO)
 
+# Configurations
+UNDERSAMPLE_THRESHOLD = 0
+VALIDATION_SPLIT = 0
+TEST_SPLIT = 0
 
 damage_intensity_encoding = defaultdict(lambda: 0)
 damage_intensity_encoding['destroyed'] = 3
@@ -46,6 +50,11 @@ damage_intensity_encoding['major-damage'] = 2
 damage_intensity_encoding['minor-damage'] = 1
 damage_intensity_encoding['no-damage'] = 0
 
+
+def save_labeled_data(x, y, csv_path):
+    data_array = {'uuid': x, 'labels': y}
+    df = pd.DataFrame(data = data_array)
+    df.to_csv(csv_path)
 
 def process_img(img_array, polygon_pts, scale_pct):
     """Process Raw Data into
@@ -78,7 +87,7 @@ def process_img(img_array, polygon_pts, scale_pct):
     return img_array[ymin:ymax, xmin:xmax, :]
 
 
-def process_data(input_path, output_path, output_csv_path, val_split_pct):
+def process_data(input_path, output_path, output_csv_path):
     """Process Raw Data into
 
         Args:
@@ -95,7 +104,7 @@ def process_data(input_path, output_path, output_csv_path, val_split_pct):
     y_data = []
 
     disasters = [folder for folder in os.listdir(input_path) if not folder.startswith('.')]
-    disaster_paths = ([input_path + "/images" for d in disasters])
+    disaster_paths = ([input_path + "/" +  d + "/images" for d in disasters])
     image_paths = []
     image_paths.extend([(disaster_path + "/" + pic) for pic in os.listdir(disaster_path)] for disaster_path in disaster_paths)
     img_paths = np.concatenate(image_paths)
@@ -121,37 +130,35 @@ def process_data(input_path, output_path, output_csv_path, val_split_pct):
 
             poly_uuid = feat['properties']['uid'] + ".png"
 
-            y_data.append(damage_intensity_encoding[damage_type])
+            if (UNDERSAMPLE_THRESHOLD == 0 or y_data.count(damage_intensity_encoding[damage_type]) < UNDERSAMPLE_THRESHOLD):
+                y_data.append(damage_intensity_encoding[damage_type])
 
-            polygon_geom = shapely.wkt.loads(feat['wkt'])
-            polygon_pts = np.array(list(polygon_geom.exterior.coords))
-            poly_img = process_img(img_array, polygon_pts, 0.8)
-            cv2.imwrite(output_path + "/" + poly_uuid, poly_img)
-            x_data.append(poly_uuid)
+                polygon_geom = shapely.wkt.loads(feat['wkt'])
+                polygon_pts = np.array(list(polygon_geom.exterior.coords))
+                poly_img = process_img(img_array, polygon_pts, 0.8)
+                cv2.imwrite(output_path + "/" + poly_uuid, poly_img)
+                x_data.append(poly_uuid)
 
     output_train_csv_path = os.path.join(output_csv_path, "train.csv")
+    output_test_csv_path = os.path.join(output_csv_path, "test.csv")
+    output_val_csv_path = os.path.join(output_csv_path, "val.csv")
 
-    if(val_split_pct > 0):
+    if (TEST_SPLIT > 0):
+        x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=TEST_SPLIT, random_state=1)
+        if (VALIDATION_SPLIT > 0):
+            x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=VALIDATION_SPLIT/(1-TEST_SPLIT), random_state=1)
+            save_labeled_data(x_val, y_val, output_val_csv_path)
 
-        # split input data into 3: train, validation and test
-        x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, random_state=1)
-        x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.25, random_state=1) # 0.25 x 0.8 = 0.2
+        save_labeled_data(x_test, y_test, output_test_csv_path)
+        save_labeled_data(x_train, y_train, output_train_csv_path)
 
-        data_array_train = {'uuid': x_train, 'labels': y_train}
-        data_array_test = {'uuid': x_test, 'labels': y_test}
-        data_array_val = {'uuid': x_val, 'labels': y_val}
-        output_test_csv_path = os.path.join(output_csv_path, "test.csv")
-        output_val_csv_path = os.path.join(output_csv_path, "val.csv")
-        df_train = pd.DataFrame(data_array_train)
-        df_test = pd.DataFrame(data_array_test)
-        df_val = pd.DataFrame(data_array_val)
-        df_train.to_csv(output_train_csv_path)
-        df_test.to_csv(output_test_csv_path)
-        df_val.to_csv(output_val_csv_path)
-    else: 
-        data_array = {'uuid': x_data, 'labels': y_data}
-        df = pd.DataFrame(data = data_array)
-        df.to_csv(output_train_csv_path)
+    elif (VALIDATION_SPLIT > 0):
+        x_train, x_val, y_train, y_val = train_test_split(x_data, y_data, test_size=VALIDATION_SPLIT/(1-TEST_SPLIT), random_state=1)
+        save_labeled_data(x_val, y_val, output_val_csv_path)
+        save_labeled_data(x_train, y_train, output_train_csv_path)
+        
+    else:
+        save_labeled_data(x_data, y_data, output_train_csv_path)
     
 
 def main():
@@ -172,7 +179,7 @@ def main():
     args = parser.parse_args()
 
     logging.info("Started Processing for Data")
-    process_data(args.input_dir, args.output_dir, args.output_dir_csv, float(args.val_split_pct))
+    process_data(args.input_dir, args.output_dir, args.output_dir_csv)
     logging.info("Finished Processing Data")
 
 
