@@ -15,6 +15,6 @@ args = parser()
 im1 = Image.open(args.img1) 
 im2 = Image.open(args.img2)
 
-diff = ImageChops.subtract(im2, im1)
+diff = ImageChops.difference(im2, im1)
 
 diff.save(args.diff)
