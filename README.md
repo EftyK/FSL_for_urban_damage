@@ -12,3 +12,4 @@ The necessary data preparation is based on the formatting described in [xView2 b
 
 1. preprocess: Contains the scripts for data pre-processing.
 1. protonet: Contains the scripts for training and evaluating the Prototypical Networks model.
+1. inference: Contains the scripts for extracting the visual inference out of the produced ProtoNet model.
