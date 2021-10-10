@@ -8,12 +8,11 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
 import tensorflow as tf
-#import keras
 from tensorflow.keras.models import load_model
 from tensorflow.keras.models import Model
 
 from data_generator import DataGenerator
-from model_proto import conv_net, hinge_loss, l2_distance, acc, l1_distance
+from model import conv_net, hinge_loss, l2_distance, acc, l1_distance
 from util.tensor_op import *
 from util.loss import *
 
@@ -44,11 +43,11 @@ model = load_model(args.path, custom_objects={'tf': tf})
 df = pd.read_csv(args.test_csv)
 df = df.replace({"labels" : damage_intensity_encoding })
 
-test_datagen = DataGenerator(data_type='train', way=4, query=470, shot=50, num_batch=1)
+test_datagen = DataGenerator(csv_file=args.test_csv , data_dir=args.test_dir , way=4, query=470, shot=50, num_batch=1)
 
 predictions = model.predict(test_datagen)
 
-val_trues = test_datagen1.produced_classes
+val_trues = test_datagen.produced_classes
 val_pred = np.argmax(predictions, axis=-1)
 
 VAL_PRED = np.array(val_pred).tolist()

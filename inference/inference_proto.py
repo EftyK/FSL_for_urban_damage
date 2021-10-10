@@ -33,7 +33,6 @@ import argparse
 import logging
 import json
 from sys import exit
-import cv2
 import datetime
 
 import shapely.wkt
@@ -52,10 +51,6 @@ from data_generator import DataGenerator
 from model import conv_net, hinge_loss, l2_distance, acc, l1_distance
 from util.tensor_op import *
 from util.loss import *
-
-# Configurations
-LOG_DIR = '/tmp/inference/classification_log_' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-
 
 damage_intensity_encoding = dict() 
 damage_intensity_encoding[3] = 'destroyed' 
