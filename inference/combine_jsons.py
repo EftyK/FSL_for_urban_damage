@@ -62,8 +62,9 @@ def combine_output(pred_polygons, pred_classification, output_file):
 
             # Match UUIDs from the two jsons and combine in output_json skeleton 
             for p in poly_json['features']['xy']:
-                p['properties']['subtype'] = label_json[p['properties']['uid']]
-                output_json['features']['xy'].append(p)
+                if p['properties']['uid'] in label_json:
+                    p['properties']['subtype'] = label_json[p['properties']['uid']]
+                    output_json['features']['xy'].append(p)
     
     # Finally save out the combined json file 
     with open(output_file, 'w') as out: 
